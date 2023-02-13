@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+# パラメータ
+Parameters:
+  CidrIp:
+    Type: String
+    Description: secondary octet ip addr
+  Project:
+    Type: String
+
+Resources:
+  # VPCの作成
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Sub '10.${CidrIp}.0.0/16'
+      EnableDnsHostnames: True
+      Tags:
+        - Key: Name
+          Value: !Ref Project
+        - Key: Project
+          Value: !Ref Project
+            
+  # IntergetGatewayの作成
+  Igw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref Project
+        - Key: Project
+          Value: !Ref Project
+  
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref Igw
+
+  ##----------------------------------##
+  # Subnets
+  ##----------------------------------##
+
+  # public subnet 作成
+  SubnetPublic1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      VpcId: !Ref Vpc
+      CidrBlock: !Sub 10.${CidrIp}.10.0/24
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+        - Key: Name
+          Value: !Ref Project
+        - Key: Project
+          Value: !Ref Project
+
+  # public subnet 作成
+  SubnetPublic2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: ap-northeast-1c
+      VpcId: !Ref Vpc
+      CidrBlock: !Sub 10.${CidrIp}.20.0/24
+      MapPublicIpOnLaunch: 'true'
+      Tags:
+        - Key: Name
+          Value: !Ref Project
+        - Key: Project
+          Value: !Ref Project
+
+
+  ##----------------------------------##
+  # RouteTable
+  ##----------------------------------##
+
+  # public route table 
+  RouteTableForPublicSubnet:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Ref Project
+        - Key: Project
+          Value: !Ref Project
+
+  
+  DefaultRouteForPublicSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref RouteTableForPublicSubnet
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref Igw
+
+
+    
+  # rtb associate
+  RouteAssocPubSubnet1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublic1
+      RouteTableId: !Ref RouteTableForPublicSubnet
+  # rtb associate
+  RouteAssocPubSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetPublic2
+      RouteTableId: !Ref RouteTableForPublicSubnet
+
+
+
+# Outputs:
+#   VpcId:
+#     Value: !Ref Vpc
+#     Description: VPC id
+
+#   SubnetPublic1a1:
+#     Value: !Ref SubnetPublic1a1
+#     Description: public subnet 1a 1
+  
+#   SubnetPublic1c1:
+#     Value: !Ref SubnetPublic1c1
+#     Description: public subnet 1c 1
+
+#   SubnetPrivate1a1:
+#     Value: !Ref SubnetPrivate1a1
+#     Description: private subnet 1a 1
+
+#   SubnetPrivate1c1:
+#     Value: !Ref SubnetPrivate1c1
+#     Description: private subnet 1c 1
