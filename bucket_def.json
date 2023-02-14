@@ -1,9 +1,0 @@
-{
-  "ACL": "authenticated-read",
-  "Bucket": "plane-nw-sample",
-  "CreateBucketConfiguration": {
-    "LocationConstraint": "ap-northeast-1"
-  },
-
-  "ObjectLockEnabledForBucket": true
-}
